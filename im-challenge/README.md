@@ -47,8 +47,8 @@ im-challenge/
 
 ```bash
 # 1) 클론 + 서브모듈 받기
-git clone https://github.com/dandel6/HappyTaxi-im-challenge.git
-cd HappyTaxi-im-challenge
+git clone https://github.com/dandel6/HappyTaxi.git
+cd HappyTaxi
 git submodule update --init --recursive
 #   (처음부터 git clone --recurse-submodules 로 받아도 같습니다)
 
