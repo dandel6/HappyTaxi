@@ -41,10 +41,10 @@ flowchart TD
 flowchart TB
     SRC["원본 HappyTaxi.sol"]
 
-    subgraph FT["forge test — 42건, 전부 PASS가 정상"]
-        U["HappyTaxiUnitTest 36건<br/>검사별 revert · 역할 분리 · 이중 정지 스위치"]
+    subgraph FT["forge test — 47건, 전부 PASS가 정상"]
+        U["HappyTaxiUnitTest 41건<br/>검사별 revert · 역할 분리 · 이중 정지 스위치"]
         MT["HappyTaxiMutationTest 4건<br/>검사를 지운 변이본에서 불변식이 깨지는지 (결정론적)"]
-        IT["HappyTaxiInvariantTest 2건<br/>불변식 8개 × 16,384 호출 퍼징"]
+        IT["HappyTaxiInvariantTest 2건<br/>불변식 8개를 16,384회 호출 퍼징에서 검사"]
     end
 
     subgraph MC["mutants/ 캠페인 — FOUNDRY_PROFILE=mutants, 4건 전부 FAIL이 정상"]
@@ -74,7 +74,7 @@ HappyTaxi/
 ├── .env.example             환경변수 키 목록 (값은 비워 둠)
 ├── contracts/               정산 원장 컨트랙트 (본체)
 │   ├── src/HappyTaxi.sol      원장 컨트랙트
-│   ├── test/HappyTaxi.t.sol   유닛·불변식·변이 테스트 42건
+│   ├── test/HappyTaxi.t.sol   유닛·불변식·변이 테스트 47건
 │   ├── mutants/               변이본 캠페인 (기본 실행에서 제외)
 │   ├── lib/                   git 서브모듈 (OpenZeppelin v5.7.0, forge-std v1.16.2)
 │   └── foundry.toml
@@ -121,7 +121,7 @@ cp .env.example .env     # 값을 채운 뒤 셸에 불러옵니다
 set -a; . ./.env; set +a
 
 # 4) 실행
-cd contracts && forge test && cd ..                          # 테스트 42건
+cd contracts && forge test && cd ..                          # 테스트 47건
 cd agent && python run_agent.py && cd ..                     # 추출 → 제출 → 중복 거부
 cd agent && python run_llm_compare.py && cd ..               # LLM 대조 (키 필요)
 cd forecast && python run_backtest.py && python run_policies.py && python run_sensitivity.py && cd ..
@@ -170,13 +170,13 @@ $env:FOUNDRY_PROFILE="mutants"; forge test --match-path 'mutants/*'
 
 **1) `forge build`** — solc 0.8.25로 컴파일됩니다. 경고 0건이어야 합니다.
 
-**2) `forge test`** — 42건이 전부 통과해야 합니다.
+**2) `forge test`** — 47건이 전부 통과해야 합니다.
 
 | 스위트 | 건수 | 확인하는 것 |
 |---|---|---|
-| `HappyTaxiUnitTest` | 36 | 검사별 revert, 역할 분리 6쌍, 이중 정지 스위치, 도메인 고유 검사 |
+| `HappyTaxiUnitTest` | 41 | 검사별 revert, 역할 분리 6쌍, 이중 정지 스위치, 도메인 고유 검사 |
 | `HappyTaxiMutationTest` | 4 | 검사를 지운 변이본에서 불변식이 실제로 깨지는지 (결정론적) |
-| `HappyTaxiInvariantTest` | 2 | 불변식 8개 × 16,384 호출 퍼징 + 핸들러 비공허성 |
+| `HappyTaxiInvariantTest` | 2 | 불변식 8개를 16,384회 호출 퍼징에서 검사 + 핸들러 비공허성 |
 
 불변식 캠페인은 `runs 256 × depth 64 = 16,384 호출`을 돌립니다. 100초 안팎 걸립니다.
 

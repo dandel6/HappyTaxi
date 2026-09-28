@@ -41,10 +41,10 @@ The driver requests settlement and the settlement agency confirms it. The split 
 flowchart TB
     SRC["Original HappyTaxi.sol"]
 
-    subgraph FT["forge test: 42 tests, all should PASS"]
-        U["HappyTaxiUnitTest, 36<br/>per-check reverts · role separation · dual pause switch"]
+    subgraph FT["forge test: 47 tests, all should PASS"]
+        U["HappyTaxiUnitTest, 41<br/>per-check reverts · role separation · dual pause switch"]
         MT["HappyTaxiMutationTest, 4<br/>invariants break on mutants with a check removed (deterministic)"]
-        IT["HappyTaxiInvariantTest, 2<br/>8 invariants × 16,384 fuzzed calls"]
+        IT["HappyTaxiInvariantTest, 2<br/>8 invariants checked across 16,384 fuzzed calls"]
     end
 
     subgraph MC["mutants/ campaign: FOUNDRY_PROFILE=mutants, all 4 should FAIL"]
@@ -74,7 +74,7 @@ HappyTaxi/
 ├── .env.example             env var names (values left empty)
 ├── contracts/               settlement ledger contract (the core)
 │   ├── src/HappyTaxi.sol      ledger contract
-│   ├── test/HappyTaxi.t.sol   42 unit, invariant and mutation tests
+│   ├── test/HappyTaxi.t.sol   47 unit, invariant and mutation tests
 │   ├── mutants/               mutant campaign (excluded from the default run)
 │   ├── lib/                   git submodules (OpenZeppelin v5.7.0, forge-std v1.16.2)
 │   └── foundry.toml
@@ -121,7 +121,7 @@ cp .env.example .env     # fill in the values, then load them into your shell
 set -a; . ./.env; set +a
 
 # 4) run
-cd contracts && forge test && cd ..                          # 42 tests
+cd contracts && forge test && cd ..                          # 47 tests
 cd agent && python run_agent.py && cd ..                     # extract → submit → duplicate rejection
 cd agent && python run_llm_compare.py && cd ..               # LLM comparison (needs a key)
 cd forecast && python run_backtest.py && python run_policies.py && python run_sensitivity.py && cd ..
@@ -170,13 +170,13 @@ $env:FOUNDRY_PROFILE="mutants"; forge test --match-path 'mutants/*'
 
 **1) `forge build`** compiles with solc 0.8.25. It should produce zero warnings.
 
-**2) `forge test`** should pass all 42 tests.
+**2) `forge test`** should pass all 47 tests.
 
 | Suite | Count | What it checks |
 |---|---|---|
-| `HappyTaxiUnitTest` | 36 | per-check reverts, 6 role separation pairs, dual pause switch, domain-specific checks |
+| `HappyTaxiUnitTest` | 41 | per-check reverts, 6 role separation pairs, dual pause switch, domain-specific checks |
 | `HappyTaxiMutationTest` | 4 | whether invariants really break on mutants with a check removed (deterministic) |
-| `HappyTaxiInvariantTest` | 2 | 8 invariants × 16,384 fuzzed calls + handler non-vacuity |
+| `HappyTaxiInvariantTest` | 2 | 8 invariants checked across 16,384 fuzzed calls + handler non-vacuity |
 
 The invariant campaign runs `runs 256 × depth 64 = 16,384 calls` and takes around 100 seconds.
 
