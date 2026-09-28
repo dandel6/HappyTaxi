@@ -17,7 +17,7 @@ im-challenge/
 │   ├── src/HappyTaxi.sol      원장 컨트랙트
 │   ├── test/HappyTaxi.t.sol   유닛·불변식·변이 테스트 42건
 │   ├── mutants/               변이본 캠페인 (기본 실행에서 제외)
-│   ├── lib/                   vendored 의존성 (OpenZeppelin 5.7.0, forge-std)
+│   ├── lib/                   git 서브모듈 (OpenZeppelin v5.7.0, forge-std v1.16.2)
 │   └── foundry.toml
 ├── agent/                   운행 기록 추출 에이전트 (Python)
 │   ├── schema.py              LLM 출력 강제용 JSON 스키마
@@ -39,7 +39,36 @@ im-challenge/
 └── web/index.html           반사실 비교 데모 화면 (정적 HTML)
 ```
 
-`contracts/lib/`는 의존성 소스를 그대로 담았습니다. **네트워크 없이 바로 빌드·테스트가 되도록** 하기 위함이고, `forge install`을 따로 실행하실 필요가 없습니다.
+`contracts/lib/`의 의존성은 git 서브모듈입니다. 버전은 `contracts/foundry.lock`에 태그와 커밋으로 고정되어 있습니다. 클론 직후에는 비어 있으므로 아래 순서대로 한 번 받아 두셔야 합니다.
+
+---
+
+## 클론 후 실행 순서
+
+```bash
+# 1) 클론 + 서브모듈 받기
+git clone https://github.com/dandel6/HappyTaxi-im-challenge.git
+cd HappyTaxi-im-challenge
+git submodule update --init --recursive
+#   (처음부터 git clone --recurse-submodules 로 받아도 같습니다)
+
+# 2) 컴파일
+cd im-challenge/contracts
+forge build
+
+# 3) 환경변수 (LLM 대조를 돌릴 때만 필요, 나머지는 키 없이 동작)
+cd ..
+cp .env.example .env     # 값을 채운 뒤 셸에 불러옵니다
+set -a; . ./.env; set +a
+
+# 4) 실행
+cd contracts && forge test && cd ..                          # 테스트 42건
+cd agent && python run_agent.py && cd ..                     # 추출 → 제출 → 중복 거부
+cd agent && python run_llm_compare.py && cd ..               # LLM 대조 (키 필요)
+cd forecast && python run_backtest.py && python run_policies.py && python run_sensitivity.py && cd ..
+```
+
+`.env.example`의 변수는 네 개입니다. `LLM_API_BASE`·`LLM_API_KEY`·`LLM_API_MODEL`은 LLM 대조용이고(아래 "LLM 경로 실행 방법" 참조), `OUTLINES_MODEL`은 로컬 outlines 백엔드를 쓸 때만 넣습니다. 코드는 `.env` 파일을 직접 읽지 않고 환경변수만 보므로, 위처럼 셸에 불러오거나 `export`로 넣으십시오. `.env`는 `.gitignore`에 들어 있습니다.
 
 ---
 

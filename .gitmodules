@@ -1,0 +1,6 @@
+[submodule "im-challenge/contracts/lib/forge-std"]
+	path = im-challenge/contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "im-challenge/contracts/lib/openzeppelin-contracts"]
+	path = im-challenge/contracts/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
