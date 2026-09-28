@@ -42,4 +42,4 @@
   운행ID를 컨트랙트가 (차량해시, 운행일시, 출발지)로 직접 파생하기 때문이다.
   추출값이 틀려도 이 성질은 유지된다 — 논지가 정확도가 아니라 구조에 있다.
 
-저장: C:\Users\none\im-challenge\agent\out\submissions.json
+저장: agent/out/submissions.json

@@ -1,7 +1,7 @@
 # Foundry
-im-challenge/contracts/out/
-im-challenge/contracts/cache/
-im-challenge/contracts/broadcast/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
 
 # Python
 __pycache__/

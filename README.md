@@ -8,11 +8,67 @@
 
 ---
 
+## 구조 한눈에 보기
+
+### 데이터 흐름
+
+```mermaid
+flowchart TD
+    A["TIMS 운행 로그"] --> B["에이전트<br/>LLM / 정규식 추출<br/>JSON 스키마 강제"]
+    B --> C["운영기관 제출<br/>(기사 self-submit 불가)"]
+    C --> D
+
+    subgraph SC["HappyTaxi.sol"]
+        D["운행ID 자체 파생<br/>keccak(차량번호해시, 운행일시, 출발지)"] --> E{"이미 청구된 운행ID?"}
+        E -- "예" --> R["거부<br/>RideAlreadyClaimed"]
+        E -- "아니오" --> F["상한 검사<br/>회당 상한 / 기사별 기간 상한"]
+        F --> G["청구권 확정<br/>예산이 0이어도 기록"]
+    end
+
+    G --> H["예산 확보 시 소급 지급"]
+
+    DRV(["기사"]) -. "정산 요청" .-> G
+    SET(["정산기관"]) -. "확정" .-> G
+```
+
+정산 요청은 기사 본인, 확정은 정산기관이 맡습니다. 한 역할이 요청·확정·취소를 모두 쥐지 않도록 나눈 것입니다.
+
+### 검증 구조
+
+```mermaid
+flowchart TB
+    SRC["원본 HappyTaxi.sol"]
+
+    subgraph FT["forge test — 42건, 전부 PASS가 정상"]
+        U["HappyTaxiUnitTest 36건<br/>검사별 revert · 역할 분리 · 이중 정지 스위치"]
+        MT["HappyTaxiMutationTest 4건<br/>검사를 지운 변이본에서 불변식이 깨지는지 (결정론적)"]
+        IT["HappyTaxiInvariantTest 2건<br/>불변식 8개 × 16,384 호출 퍼징"]
+    end
+
+    subgraph MC["mutants/ 캠페인 — FOUNDRY_PROFILE=mutants, 4건 전부 FAIL이 정상"]
+        M1["M1: 기간 상한 revert 삭제<br/>INV_CAP_1 + INV_COVERAGE → FAIL"]
+        M2["M2: 운행ID 소진 기록 삭제<br/>INV_ONCE_1 → FAIL"]
+        M3["M3: 예산 절삭 min 삭제<br/>INV_ACCT_2 → FAIL"]
+        M4["M4: 취소 시 현재 버킷 차감<br/>INV_QUOTA_2 → FAIL"]
+    end
+
+    SRC --> U
+    SRC --> IT
+    SRC -. "검사 한 줄씩 삭제" .-> MC
+    SRC --> MT
+    IT -. "같은 불변식 캠페인" .-> MC
+```
+
+변이본에서 하나라도 PASS가 나오면 그 불변식이 해당 검사를 지키고 있지 않다는 뜻입니다.
+
+---
+
 ## 디렉터리 구조
 
 ```
-im-challenge/
+HappyTaxi/
 ├── README.md                이 문서
+├── .env.example             환경변수 키 목록 (값은 비워 둠)
 ├── contracts/               정산 원장 컨트랙트 (본체)
 │   ├── src/HappyTaxi.sol      원장 컨트랙트
 │   ├── test/HappyTaxi.t.sol   유닛·불변식·변이 테스트 42건
@@ -53,7 +109,7 @@ git submodule update --init --recursive
 #   (처음부터 git clone --recurse-submodules 로 받아도 같습니다)
 
 # 2) 컴파일
-cd im-challenge/contracts
+cd contracts
 forge build
 
 # 3) 환경변수 (LLM 대조를 돌릴 때만 필요, 나머지는 키 없이 동작)
