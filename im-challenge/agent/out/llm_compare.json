@@ -1,0 +1,128 @@
+{
+  "note": "실제 LLM API 호출 결과. 키는 기록하지 않음.",
+  "endpoint": "https://api.orcarouter.ai/v1",
+  "model": "gpt-5.6-luna",
+  "rides": 5,
+  "llm_success": 5,
+  "mismatched_fields": 0,
+  "api_errors": [],
+  "records": [
+    {
+      "ride": "ride_001.txt",
+      "llm": {
+        "vehicle_no": "12가3456",
+        "ride_datetime": "2026-09-01T08:15:00",
+        "origin_village": "구지리",
+        "meter_fare_krw": 11400,
+        "distance_m": 5200,
+        "passengers": 1,
+        "fare_source": "meter"
+      },
+      "regex": {
+        "vehicle_no": "12가3456",
+        "ride_datetime": "2026-09-01T08:15:00",
+        "origin_village": "구지리",
+        "meter_fare_krw": 11400,
+        "distance_m": 5200,
+        "passengers": 1,
+        "fare_source": "meter"
+      },
+      "mismatched_fields": [],
+      "latency_s": 2.13
+    },
+    {
+      "ride": "ride_002.txt",
+      "llm": {
+        "vehicle_no": "34나7890",
+        "ride_datetime": "2026-09-01T09:40:00",
+        "origin_village": "유가리",
+        "meter_fare_krw": 14200,
+        "distance_m": 7800,
+        "passengers": 2,
+        "fare_source": "meter"
+      },
+      "regex": {
+        "vehicle_no": "34나7890",
+        "ride_datetime": "2026-09-01T09:40:00",
+        "origin_village": "유가리",
+        "meter_fare_krw": 14200,
+        "distance_m": 7800,
+        "passengers": 2,
+        "fare_source": "meter"
+      },
+      "mismatched_fields": [],
+      "latency_s": 2.04
+    },
+    {
+      "ride": "ride_003.txt",
+      "llm": {
+        "vehicle_no": "12가3456",
+        "ride_datetime": "2026-09-02T07:55:00",
+        "origin_village": "논공리",
+        "meter_fare_krw": 9800,
+        "distance_m": 4100,
+        "passengers": 1,
+        "fare_source": "meter"
+      },
+      "regex": {
+        "vehicle_no": "12가3456",
+        "ride_datetime": "2026-09-02T07:55:00",
+        "origin_village": "논공리",
+        "meter_fare_krw": 9800,
+        "distance_m": 4100,
+        "passengers": 1,
+        "fare_source": "meter"
+      },
+      "mismatched_fields": [],
+      "latency_s": 1.59
+    },
+    {
+      "ride": "ride_004.txt",
+      "llm": {
+        "vehicle_no": "56다1234",
+        "ride_datetime": "2026-09-02T14:20:00",
+        "origin_village": "옥포리",
+        "meter_fare_krw": 16500,
+        "distance_m": 9300,
+        "passengers": 3,
+        "fare_source": "manual"
+      },
+      "regex": {
+        "vehicle_no": "56다1234",
+        "ride_datetime": "2026-09-02T14:20:00",
+        "origin_village": "옥포리",
+        "meter_fare_krw": 16500,
+        "distance_m": 9300,
+        "passengers": 3,
+        "fare_source": "manual"
+      },
+      "mismatched_fields": [],
+      "latency_s": 1.9
+    },
+    {
+      "ride": "ride_005.txt",
+      "llm": {
+        "vehicle_no": "34나7890",
+        "ride_datetime": "2026-09-03T11:05:00",
+        "origin_village": "하빈리",
+        "meter_fare_krw": 12700,
+        "distance_m": 6400,
+        "passengers": 2,
+        "fare_source": "meter"
+      },
+      "regex": {
+        "vehicle_no": "34나7890",
+        "ride_datetime": "2026-09-03T11:05:00",
+        "origin_village": "하빈리",
+        "meter_fare_krw": 12700,
+        "distance_m": 6400,
+        "passengers": 2,
+        "fare_source": "meter"
+      },
+      "mismatched_fields": [],
+      "latency_s": 1.53
+    }
+  ],
+  "ran_at": "2026-09-18T09:55:43+09:00",
+  "compared_fields": 35
+}

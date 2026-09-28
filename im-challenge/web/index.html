@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>달성 행복택시 보조금 정산 관제</title>
+<style>
+  :root{
+    /* --faint 는 이전 #8d8a82 였고 카드 배경 대비 3.27:1 로 WCAG AA(4.5:1)에 미달했다.
+       11.5px 보조 텍스트에 쓰이므로 큰 글자 예외도 적용되지 않는다. */
+    --paper:#fdfdfb; --ink:#22211e; --soft:#6f6c64; --faint:#74706a;
+    --rule:#cac7bf; --rule-bold:#22211e; --shade:#f1efe9; --shade2:#faf9f5;
+    --accrued:#9a5b00; --claimable:#1f6b4a; --locked:#2c4e8a; --alert:#9b2c2c;
+    --serif:"Batang","바탕","Nanum Myeongjo",serif;
+    --sans:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:#e9e7e1;color:var(--ink);font:13.5px/1.7 var(--sans)}
+  .sheet{max-width:980px;margin:22px auto 56px;background:var(--paper);
+         padding:30px 36px 30px;border:1px solid #d6d3cb}
+
+  /* ── 머리 ── */
+  .doc-head{border-bottom:2px solid var(--rule-bold);padding-bottom:13px}
+  .doc-head h1{margin:0;font:400 24px/1.35 var(--serif);letter-spacing:-.6px}
+  .strip{display:flex;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--soft)}
+  .strip div{margin-right:30px;white-space:nowrap}
+  .strip b{color:var(--ink);font-weight:600;margin-left:6px}
+
+  .live{margin:14px 0 0;padding:10px 13px;border:1px solid var(--rule-bold);
+        background:var(--shade);font-size:12.5px;line-height:1.65;color:#514e47}
+  .live strong{color:var(--ink);font-weight:600}
+  .caveat{margin:10px 0 0;padding:10px 13px;background:var(--shade2);
+          border:1px solid var(--rule);font-size:12.5px;line-height:1.65;color:#514e47}
+  .caveat strong{color:var(--ink);font-weight:600}
+
+  /* ── 절 ── */
+  section{margin-top:30px}
+  h2{margin:0 0 2px;font:600 15px/1.5 var(--sans);
+     padding-bottom:6px;border-bottom:1px solid var(--rule-bold)}
+  .h2note{margin:7px 0 0;font-size:12.5px;color:var(--soft)}
+
+  /* ── 지표 카드 (flex) ── */
+  .kpis{display:flex;flex-wrap:wrap;margin:14px -6px 0}
+  .kpi{flex:1 1 190px;margin:0 6px 12px;border:1px solid var(--rule);
+       background:var(--shade2);padding:13px 15px 12px}
+  .kpi .k{font-size:12px;color:var(--soft);white-space:nowrap}
+  .kpi .v{margin-top:5px;font-size:23px;font-weight:600;letter-spacing:-.5px;
+          font-variant-numeric:tabular-nums;white-space:nowrap}
+  .kpi .n{margin-top:3px;font-size:11.5px;color:var(--faint)}
+  .kpi.s-accrued{border-left:3px solid var(--accrued)}
+  .kpi.s-accrued .v{color:var(--accrued)}
+
+  /* ── 스테퍼 (table) ── */
+  table.step{width:100%;border-collapse:collapse;margin-top:14px;table-layout:fixed}
+  table.step td{padding:0;vertical-align:top}
+  table.step td.arrow{width:26px;text-align:center;color:var(--faint);
+                      font-size:15px;padding-top:24px}
+  .stepbox{border:1px solid var(--rule);border-top:3px solid var(--rule);
+           background:var(--shade2);padding:11px 12px 10px;min-height:82px}
+  .stepbox.a{border-top-color:var(--accrued)}
+  .stepbox.b{border-top-color:var(--claimable)}
+  .stepbox.c{border-top-color:var(--locked)}
+  .stepbox.d{border-top-color:var(--rule-bold)}
+  .stepbox .t{font-size:12px;color:var(--soft)}
+  .stepbox .m{margin-top:4px;font-size:17px;font-weight:600;
+              font-variant-numeric:tabular-nums;white-space:nowrap}
+  .stepbox .f{margin-top:3px;font-size:11.5px;color:var(--faint)}
+  .stepbox.a .m{color:var(--accrued)} .stepbox.b .m{color:var(--claimable)}
+  .stepbox.c .m{color:var(--locked)}
+
+  /* ── 2단 배치 (flex) ── */
+  .cols{display:flex;flex-wrap:wrap;margin:0 -9px}
+  .col{flex:1 1 300px;margin:0 9px}
+  .panel{border:1px solid var(--rule);padding:14px 16px;margin-top:14px;background:var(--paper)}
+  .panel h3{margin:0 0 3px;font:600 13px/1.5 var(--sans)}
+  .panel .pn{margin:0 0 10px;font-size:11.5px;color:var(--soft)}
+
+  /* ── 표 ── */
+  table.data{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+  caption{text-align:left;font-size:12.5px;color:var(--soft);padding-bottom:6px}
+  table.data th,table.data td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:baseline}
+  table.data thead th{background:var(--shade);border-bottom:1px solid var(--rule-bold);
+                      font-weight:600;font-size:12.5px;text-align:left}
+  .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.data tfoot td{border-top:1px solid var(--rule-bold);border-bottom:2px solid var(--rule-bold);
+                      font-weight:600;background:var(--shade2)}
+  .sub{display:block;font-size:11.5px;color:var(--soft);margin-top:2px}
+  .tag{font-size:11.5px;color:var(--soft)}
+
+  /* ── 항등식 ── */
+  .identity{margin-top:14px;border:1px solid var(--rule);padding:14px 16px;background:var(--shade2)}
+  table.idt{width:100%;border-collapse:collapse;margin:0;font-size:13px}
+  table.idt th,table.idt td{border:0;padding:4px 0;vertical-align:baseline}
+  table.idt th{color:var(--soft);font-weight:400;text-align:left}
+  table.idt td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .identity .verdict{margin-top:12px;padding-top:11px;border-top:1px solid var(--rule);
+                     font-size:13px;overflow:hidden}
+  .identity .verdict span{float:left} .identity .verdict b{float:right;font-size:14px}
+
+  /* ── 이벤트 로그 ── */
+  table.log{width:100%;border-collapse:collapse;margin-top:14px;font-size:12.5px}
+  table.log th,table.log td{padding:6px 9px;border-bottom:1px solid var(--rule);text-align:left}
+  table.log thead th{background:var(--shade);border-bottom:1px solid var(--rule-bold);
+                     font-weight:600;font-size:12px}
+  table.log td.fn{white-space:nowrap;font-weight:600}
+  table.log td.ts{white-space:nowrap;color:var(--soft);font-variant-numeric:tabular-nums}
+  table.log td.amt{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .dot{display:inline-block;width:3px;height:12px;margin-right:7px;vertical-align:-2px}
+
+  /* ── 반사실 ── */
+  .switch{border:1px solid var(--rule-bold);margin-top:14px;display:inline-block;overflow:hidden}
+  .switch button{float:left;padding:9px 16px;border:0;background:var(--paper);color:var(--soft);
+                 font:13px var(--sans);cursor:pointer}
+  .switch button + button{border-left:1px solid var(--rule-bold)}
+  .switch button[aria-pressed="true"]{background:var(--ink);color:var(--paper);font-weight:600}
+  .switch button:focus-visible{outline:2px solid var(--ink);outline-offset:-4px}
+  figure{margin:16px 0 0}
+  figcaption{margin-top:10px;font-size:12.5px;color:#514e47;line-height:1.7}
+
+  .legend{margin-top:9px;font-size:11.5px;color:var(--soft)}
+  .legend span{margin-right:16px;white-space:nowrap}
+
+  /* 넓은 차트는 줄이지 않고 가로로 밀어 본다.
+     viewBox 900을 375px 화면에 맞추면 글자가 4px까지 줄어들어 판독이 불가능하다.
+     레이아웃을 안 깨뜨리는 대신 글자를 잃는 것보다 스크롤이 낫다. */
+  .chart-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  .chart-scroll > svg{display:block;min-width:640px}
+
+  /* 스크린리더 전용. 시각적으로는 이미 h2·h2note 가 맥락을 주므로 중복 노출하지 않는다. */
+  .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;
+           overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+  noscript .caveat{border-color:var(--rule-bold)}
+
+  footer{margin-top:34px;padding-top:15px;border-top:1px solid var(--rule);
+         font-size:12px;line-height:1.8;color:var(--soft)}
+  footer strong{color:var(--ink);font-weight:600}
+
+  @media (max-width:760px){
+    .sheet{margin:0;padding:24px 18px;border:0}
+    .kpi{flex:1 1 44%}
+    table.step,table.step tbody,table.step tr,table.step td{display:block;width:100%}
+    table.step td.arrow{padding:2px 0;text-align:left}
+    .tbl-scroll{overflow-x:auto}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="doc-head">
+    <h1>달성 행복택시 보조금 정산 관제</h1>
+    <div class="strip">
+      <div>정산 기간<b>2026년 9월</b></div>
+      <div>편성 예산<b id="m-budget">—</b></div>
+      <div>제출 기관<b>운영기관</b></div>
+      <div>배정 기관<b>달성군</b></div>
+    </div>
+  </div>
+
+  <p class="live">
+    <strong>표시된 값은 하드코딩된 시연 데이터이며 컨트랙트 상태를 실시간으로 읽지 않습니다.
+    실시간 연결은 본선 범위입니다.</strong>
+    화면의 운행 5건은 <span class="tag">agent/data/rides</span>와 같은 데이터이고,
+    잔액과 이벤트는 컨트랙트 로직을 그대로 재현한 고정값입니다.
+  </p>
+
+  <noscript>
+    <p class="caveat">
+      <strong>이 화면은 스크립트로 값을 채워 그립니다.</strong>
+      지금 스크립트가 차단돼 있어 숫자와 차트가 빈칸(—)으로 보입니다.
+      외부 서버나 네트워크는 사용하지 않으므로, 스크립트를 허용하고 새로고침하면
+      오프라인 상태에서도 전체 내용이 표시됩니다.
+    </p>
+  </noscript>
+
+  <p class="caveat">
+    운행 5건은 <strong>합성 데이터</strong>입니다. 대구 빅데이터활용센터 데이터 설명서 4-7의
+    컬럼명만 참조해 만들었고 실제 운행 기록이 아닙니다.
+    보조금 산정식과 회당 상한은 <strong>군 규정 확인 전까지 가정</strong>입니다.
+    지원 마을 목록은 언론 보도에 개수(71)만 있어 <strong>자리표시자 식별자</strong>를 씁니다.
+  </p>
+
+  <!-- 1. 핵심 지표 -->
+  <section>
+    <h2>핵심 지표</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="k">총 청구권</div>
+        <div class="v" id="k-total">—</div><div class="n" id="k-total-n">—</div></div>
+      <div class="kpi s-accrued"><div class="k">미배정</div>
+        <div class="v" id="k-accrued">—</div><div class="n">예산 확보 시 소급 배정</div></div>
+      <div class="kpi"><div class="k">예산 집행률</div>
+        <div class="v" id="k-rate">—</div><div class="n" id="k-rate-n">—</div></div>
+      <div class="kpi"><div class="k">운행 건수</div>
+        <div class="v" id="k-rides">—</div><div class="n" id="k-rides-n">—</div></div>
+    </div>
+  </section>
+
+  <!-- 2. 상태 전이 -->
+  <section>
+    <h2>상태 전이</h2>
+    <p class="h2note">운행이 확정되는 것과 예산이 배정되는 것을 나눠 기록합니다.</p>
+    <table class="step">
+      <caption class="sr-only">청구권 상태 전이 4단계와 단계별 금액</caption>
+      <tr>
+        <td><div class="stepbox a"><div class="t">미배정</div>
+            <div class="m" id="s-accrued">—</div>
+            <div class="f">attestRide로 확정 · 예산 미배정</div></div></td>
+        <td class="arrow">&#8594;</td>
+        <td><div class="stepbox b"><div class="t">배정됨</div>
+            <div class="m" id="s-claimable">—</div>
+            <div class="f">_allocate로 예산이 붙음</div></div></td>
+        <td class="arrow">&#8594;</td>
+        <td><div class="stepbox c"><div class="t">정산 중</div>
+            <div class="m" id="s-locked">—</div>
+            <div class="f">requestSettlement 대기</div></div></td>
+        <td class="arrow">&#8594;</td>
+        <td><div class="stepbox d"><div class="t">정산 완료</div>
+            <div class="m" id="s-settled">—</div>
+            <div class="f">confirmSettlement 확정</div></div></td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- 3. 집행률 + 마을별 -->
+  <section>
+    <h2>예산 집행 현황</h2>
+    <div class="cols">
+      <div class="col">
+        <div class="panel">
+          <h3>편성 예산 집행률</h3>
+          <p class="pn">배정 누계 ÷ 편성 예산</p>
+          <svg id="gauge" viewBox="0 0 300 192" width="100%" role="img"
+               aria-labelledby="g-title"><title id="g-title">예산 집행률 도넛</title></svg>
+          <div class="legend" id="g-legend">—</div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>마을별 보조금</h3>
+          <p class="pn">운행 5건을 출발 마을 기준으로 집계 · 마을당 1건</p>
+          <svg id="village" viewBox="0 0 440 196" width="100%" role="img"
+               aria-labelledby="v-title"><title id="v-title">마을별 보조금 막대</title></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 요금 대 보조금 -->
+  <section>
+    <h2>요금 대비 보조금</h2>
+    <p class="h2note">회당 상한에서 잘리는 지점이 보이도록 나란히 놓았습니다.</p>
+    <figure>
+      <div class="chart-scroll">
+        <svg id="cap" viewBox="0 0 900 280" width="100%" role="img"
+             aria-labelledby="c-title"><title id="c-title">운행별 요금과 보조금 비교</title></svg>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:#e4e1d9;border:1px solid var(--rule)"></i>운행요금</span>
+        <span><i class="dot" style="background:var(--locked)"></i>보조금 — 상한 절삭</span>
+        <span><i class="dot" style="background:var(--claimable)"></i>보조금 — 전액 산정</span>
+      </div>
+      <figcaption id="t-cap">—</figcaption>
+    </figure>
+  </section>
+
+  <!-- 5. 운행 내역 -->
+  <section>
+    <h2>운행 내역</h2>
+    <div class="tbl-scroll">
+      <table class="data">
+        <caption>보조금 = 운행요금 − 승객부담액 1,000원, 회당 상한 10,000원 (가정)</caption>
+        <thead>
+          <tr><th>운행일시 / 차량</th><th>출발 마을</th>
+              <th class="num">운행요금</th><th class="num">보조금</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+        <tfoot><tr><td colspan="2">합계</td>
+               <td class="num" id="f-fare">—</td><td class="num" id="f-sub">—</td></tr></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6. 이벤트 로그 -->
+  <section>
+    <h2>최근 이벤트</h2>
+    <p class="h2note">컨트랙트 함수 호출 순서를 시간 역순으로 표시합니다. 고정된 시연 기록입니다.</p>
+    <div class="tbl-scroll">
+      <table class="log">
+        <caption class="sr-only">컴트랙트 함수 호출 기록 8건. 시간 역순. 고정된 시연 데이터</caption>
+        <thead><tr><th>시각</th><th>함수</th><th>내용</th><th class="num">금액</th></tr></thead>
+        <tbody id="logrows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 7. 회계 검증 -->
+  <section>
+    <h2>회계 검증</h2>
+    <p class="h2note">배정됐는데 아직 나가지 않은 예산은 반드시 기사의 잔액으로 존재해야 합니다.</p>
+    <div class="identity">
+      <table class="idt">
+        <caption class="sr-only">회계 항등식 검증 — 배정에서 정산을 번 값과 배정됨·정산중 합계의 일치 여부</caption>
+        <tr><th>편성 예산</th><td id="i-budget">—</td></tr>
+        <tr><th>배정 누계</th><td id="i-alloc">—</td></tr>
+        <tr><th>정산 완료</th><td id="i-settled">—</td></tr>
+        <tr><th>배정 − 정산</th><td id="i-left">—</td></tr>
+        <tr><th>배정됨 + 정산 중</th><td id="i-hold">—</td></tr>
+      </table>
+      <div class="verdict"><span>두 값이 일치하는가</span><b id="i-verdict">—</b></div>
+    </div>
+  </section>
+
+  <!-- 8. 반사실 -->
+  <section>
+    <h2>예산이 소진되면</h2>
+    <p class="h2note">현행 운영과 이 구조를 같은 조건에서 비교합니다.</p>
+    <div class="switch" role="group" aria-label="비교 대상">
+      <button id="b-cur" aria-pressed="true">현행</button>
+      <button id="b-new" aria-pressed="false">제안 구조</button>
+    </div>
+    <figure>
+      <div class="chart-scroll">
+        <svg id="chart" viewBox="0 0 900 250" width="100%" role="img"
+             aria-labelledby="chart-title"><title id="chart-title">누적 청구권과 누적 지급 비교</title></svg>
+      </div>
+      <figcaption id="t-chart">—</figcaption>
+    </figure>
+  </section>
+
+  <footer>
+    이 컨트랙트는 로컬 체인에만 배포했고 공개 테스트넷에는 올리지 않았습니다.
+    대구체인은 MITUM 기반으로 가상머신이 없어 배포 대상이 아닙니다.<br>
+    온체인에는 차량 해시와 금액과 마을 식별자만 남습니다. 기사와 주민의 신원은 기록하지 않습니다.<br>
+    <strong>이 화면은 컨트랙트에 연결돼 있지 않습니다.</strong> 값은 고정된 시연 데이터입니다.
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* 운행 5건 — agent/data/rides/*.txt 와 동일 */
+var RIDES = [
+  { id:"ride_001", when:"09-01 08:15", veh:"12가3456", village:"구지리", fare:11400 },
+  { id:"ride_002", when:"09-01 09:40", veh:"34나7890", village:"유가리", fare:14200 },
+  { id:"ride_003", when:"09-02 07:55", veh:"12가3456", village:"논공리", fare:9800  },
+  { id:"ride_004", when:"09-02 14:20", veh:"56다1234", village:"옥포리", fare:16500, manual:true },
+  { id:"ride_005", when:"09-03 11:05", veh:"34나7890", village:"하빈리", fare:12700 }
+];
+
+var SHARE = 1000, CAP = 10000, BUDGET = 30000, LOCKED = 10000, SETTLED = 0;
+function subsidy(f){ return Math.min(Math.max(0, f - SHARE), CAP); }
+
+var TOTAL     = RIDES.reduce(function(s,r){ return s + subsidy(r.fare); }, 0); // 48,800
+var ALLOCATED = Math.min(BUDGET, TOTAL);                                       // 30,000
+var CLAIMABLE = ALLOCATED - LOCKED;                                            // 20,000
+var ACCRUED   = TOTAL - ALLOCATED;                                             // 18,800
+var CAPPED    = RIDES.filter(function(r){ return subsidy(r.fare) === CAP; }).length;
+var RATE      = ALLOCATED / BUDGET * 100;
+
+/* 천단위 구분 — 브라우저 로케일 포맷터는 환경에 따라 구분기호가 빠지거나
+   다른 문자로 나오므로 쓰지 않는다. 자릿수를 직접 끊어 붙인다. */
+function fmt(n){
+  var s = String(Math.round(n)), out = "", c = 0;
+  for (var i = s.length - 1; i >= 0; i--){
+    out = s.charAt(i) + out;
+    if (++c % 3 === 0 && i > 0) out = "," + out;
+  }
+  return out;
+}
+function won(n){ return fmt(n) + "원"; }
+function set(id, txt){ document.getElementById(id).textContent = txt; }
+function put(id, html){ document.getElementById(id).innerHTML = html; }
+
+/* ── 머리·지표 ── */
+set("m-budget", won(BUDGET));
+set("k-total", won(TOTAL));
+set("k-total-n", "운행 " + RIDES.length + "건 합계");
+set("k-accrued", won(ACCRUED));
+set("k-rate", RATE.toFixed(1) + "%");
+set("k-rate-n", "배정 " + fmt(ALLOCATED) + " / 편성 " + fmt(BUDGET));
+set("k-rides", RIDES.length + "건");
+set("k-rides-n", CAPPED + "건이 회당 상한에서 절삭");
+
+/* ── 스테퍼 ── */
+set("s-accrued", won(ACCRUED));
+set("s-claimable", won(CLAIMABLE));
+set("s-locked", won(LOCKED));
+set("s-settled", won(SETTLED));
+
+/* ── 집행률 도넛 ── */
+(function(){
+  var cx = 150, cy = 84, r = 58, sw = 20;
+  var C = 2 * Math.PI * r;
+  var frac = Math.max(0, Math.min(1, ALLOCATED / BUDGET));
+  var on = C * frac;
+  put("gauge",
+    '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#e4e1d9" stroke-width="' + sw + '"/>' +
+    '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#1f6b4a" stroke-width="' + sw + '"' +
+      ' stroke-dasharray="' + on.toFixed(2) + ' ' + (C - on).toFixed(2) + '"' +
+      ' transform="rotate(-90 ' + cx + ' ' + cy + ')"/>' +
+    '<text x="' + cx + '" y="' + (cy + 2) + '" text-anchor="middle" font-size="27" font-weight="600" fill="#22211e">' +
+      RATE.toFixed(1) + '%</text>' +
+    '<text x="' + cx + '" y="' + (cy + 22) + '" text-anchor="middle" font-size="11.5" fill="#6f6c64">배정 기준</text>' +
+    '<text x="' + cx + '" y="' + (cy + 88) + '" text-anchor="middle" font-size="11.5" fill="#6f6c64">' +
+      '정산 완료 기준 ' + (SETTLED / BUDGET * 100).toFixed(1) + '%</text>');
+  set("g-legend",
+    "편성 예산이 전액 배정돼 잔여가 없습니다. 미배정 청구권 " + won(ACCRUED) +
+    "은 추가 편성 전까지 지급되지 않습니다.");
+})();
+
+/* ── 마을별 보조금 ── */
+(function(){
+  var agg = [];
+  RIDES.forEach(function(r){
+    var hit = null;
+    for (var i = 0; i < agg.length; i++) if (agg[i].v === r.village) hit = agg[i];
+    if (!hit){ hit = { v:r.village, amt:0, n:0 }; agg.push(hit); }
+    hit.amt += subsidy(r.fare); hit.n += 1;
+  });
+  var W = 440, rowH = 30, x0 = 62, x1 = 372, top = 16;
+  var max = Math.max.apply(null, agg.map(function(a){ return a.amt; }));
+  var out = "";
+  agg.forEach(function(a, i){
+    var y = top + i * rowH, w = (a.amt / max) * (x1 - x0);
+    out += '<text x="' + (x0 - 8) + '" y="' + (y + 13) + '" text-anchor="end" font-size="12" fill="#22211e">' +
+             a.v + '</text>' +
+           '<rect x="' + x0 + '" y="' + y + '" width="' + w.toFixed(1) + '" height="17" fill="#1f6b4a"/>' +
+           '<text x="' + (x0 + w + 7) + '" y="' + (y + 13) + '" font-size="11.5" fill="#6f6c64">' +
+             fmt(a.amt) + '</text>';
+  });
+  out += '<line x1="' + x0 + '" y1="' + (top - 5) + '" x2="' + x0 + '" y2="' +
+         (top + agg.length * rowH - 8) + '" stroke="#cac7bf"/>';
+  put("village", out);
+})();
+
+/* ── 요금 대비 보조금 ── */
+(function(){
+  // 기준선 레이블을 플롯 안에 두면 막대·값 레이블과 겹친다. 왼쪽 축 밖으로 뺀다.
+  var W = 900, H = 280, P = { l:104, r:20, t:22, b:56 };
+  var n = RIDES.length, band = (W - P.l - P.r) / n, bw = 26, gap = 6;
+  var max = Math.max.apply(null, RIDES.map(function(r){ return r.fare; })) * 1.12;
+  function Y(v){ return H - P.b - v / max * (H - P.t - P.b); }
+  var out = "";
+
+  out += '<line x1="' + P.l + '" y1="' + Y(0) + '" x2="' + (W - P.r) + '" y2="' + Y(0) + '" stroke="#22211e"/>';
+  out += '<line x1="' + P.l + '" y1="' + Y(CAP) + '" x2="' + (W - P.r) + '" y2="' + Y(CAP) +
+         '" stroke="#2c4e8a" stroke-dasharray="5 4"/>' +
+         '<text x="' + (P.l - 10) + '" y="' + (Y(CAP) - 3) + '" text-anchor="end" font-size="11.5" fill="#2c4e8a">' +
+           '회당 상한</text>' +
+         '<text x="' + (P.l - 10) + '" y="' + (Y(CAP) + 12) + '" text-anchor="end" font-size="11.5" fill="#2c4e8a">' +
+           fmt(CAP) + '원</text>';
+  out += '<line x1="' + P.l + '" y1="' + Y(SHARE) + '" x2="' + (W - P.r) + '" y2="' + Y(SHARE) +
+         '" stroke="#cac7bf" stroke-dasharray="3 3"/>' +
+         '<text x="' + (P.l - 10) + '" y="' + (Y(SHARE) + 4) + '" text-anchor="end" font-size="11" fill="#74706a">' +
+           '승객부담 ' + fmt(SHARE) + '원</text>';
+
+  RIDES.forEach(function(r, i){
+    var cx = P.l + band * i + band / 2;
+    var s = subsidy(r.fare), capped = s === CAP;
+    var xf = cx - bw - gap / 2, xs = cx + gap / 2;
+
+    out += '<rect x="' + xf.toFixed(1) + '" y="' + Y(r.fare).toFixed(1) + '" width="' + bw +
+           '" height="' + (Y(0) - Y(r.fare)).toFixed(1) + '" fill="#e4e1d9" stroke="#cac7bf"/>' +
+           '<text x="' + (xf + bw / 2).toFixed(1) + '" y="' + (Y(r.fare) - 6).toFixed(1) +
+             '" text-anchor="middle" font-size="11" fill="#6f6c64">' + fmt(r.fare) + '</text>';
+
+    out += '<rect x="' + xs.toFixed(1) + '" y="' + Y(s).toFixed(1) + '" width="' + bw +
+           '" height="' + (Y(0) - Y(s)).toFixed(1) + '" fill="' + (capped ? "#2c4e8a" : "#1f6b4a") + '"/>' +
+           '<text x="' + (xs + bw / 2).toFixed(1) + '" y="' + (Y(s) - 6).toFixed(1) +
+             '" text-anchor="middle" font-size="11" fill="#22211e">' + fmt(s) + '</text>';
+
+    if (capped){
+      out += '<line x1="' + xs.toFixed(1) + '" y1="' + Y(r.fare - SHARE).toFixed(1) +
+             '" x2="' + (xs + bw).toFixed(1) + '" y2="' + Y(r.fare - SHARE).toFixed(1) +
+             '" stroke="#9a5b00" stroke-width="1.4" stroke-dasharray="2 2"/>';
+    }
+
+    out += '<text x="' + cx.toFixed(1) + '" y="' + (H - P.b + 17) +
+             '" text-anchor="middle" font-size="11.5" fill="#22211e">' + r.village + '</text>' +
+           '<text x="' + cx.toFixed(1) + '" y="' + (H - P.b + 32) +
+             '" text-anchor="middle" font-size="11" fill="#74706a">' + r.when.slice(0, 5) +
+             (r.manual ? " · 수동" : "") + '</text>';
+  });
+
+  put("cap", out);
+  set("t-cap",
+    "왼쪽 회색이 운행요금, 오른쪽이 보조금입니다. " + CAPPED + "건은 요금에서 승객부담 1,000원을 뺀 값이 " +
+    "회당 상한을 넘어 " + fmt(CAP) + "원에서 잘렸습니다(파란 막대, 주황 점선이 절삭 전 위치). " +
+    "논공리 1건만 요금 9,800원이라 8,800원 전액이 산정됐습니다. " +
+    "추출 오류로 요금이 과다 입력돼도 피해가 이 상한 안에 갇힙니다.");
+})();
+
+/* ── 운행 내역 ── */
+put("rows", RIDES.map(function(r){
+  var s = subsidy(r.fare), capped = s === CAP;
+  return "<tr><td>" + r.when +
+    "<span class='sub'>" + r.veh + (r.manual ? " · 수동 입력" : "") + "</span></td>" +
+    "<td>" + r.village + "</td>" +
+    "<td class='num'>" + fmt(r.fare) + "</td>" +
+    "<td class='num'>" + fmt(s) + (capped ? "<span class='sub'>상한 적용</span>" : "") + "</td></tr>";
+}).join(""));
+set("f-fare", fmt(RIDES.reduce(function(s,r){ return s + r.fare; }, 0)));
+set("f-sub", fmt(TOTAL));
+
+/* ── 이벤트 로그 (고정) ──
+   _allocate는 예산 잔여 범위에서만 배정한다. 30,000이
+   10,000 + 10,000 + 8,800 + 1,200 으로 소진되고 마지막 운행은 0원 배정된다. */
+var LOG = [
+  { t:"09-03 11:06", fn:"_allocate",         d:"예산 잔여 없음 · 미배정으로 남김",        a:0,      s:"a" },
+  { t:"09-03 11:06", fn:"attestRide",        d:"ride_005 하빈리 · 청구권 확정",           a:10000,  s:"a" },
+  { t:"09-02 14:21", fn:"_allocate",         d:"부분 배정 · 예산 잔여 0원",               a:1200,   s:"b" },
+  { t:"09-02 14:21", fn:"attestRide",        d:"ride_004 옥포리 · 수동 입력 · 청구권 확정", a:10000, s:"a" },
+  { t:"09-02 07:56", fn:"_allocate",         d:"예산 잔여 1,200원",                       a:8800,   s:"b" },
+  { t:"09-02 07:56", fn:"attestRide",        d:"ride_003 논공리 · 상한 미달 전액 산정",    a:8800,   s:"a" },
+  { t:"09-01 09:41", fn:"requestSettlement", d:"운영기관 대리 청구 · 배정됨에서 차감",     a:-10000, s:"c" },
+  { t:"09-01 08:16", fn:"attestRide",        d:"ride_001 구지리 · 청구권 확정",           a:10000,  s:"a" }
+];
+var SC = { a:"var(--accrued)", b:"var(--claimable)", c:"var(--locked)" };
+put("logrows", LOG.map(function(e){
+  var amt = (e.a > 0 ? "+" : e.a < 0 ? "−" : "") + fmt(Math.abs(e.a));
+  return "<tr><td class='ts'>" + e.t + "</td>" +
+    "<td class='fn'><i class='dot' style='background:" + SC[e.s] + "'></i>" + e.fn + "</td>" +
+    "<td>" + e.d + "</td>" +
+    "<td class='amt'>" + amt + "</td></tr>";
+}).join(""));
+
+/* ── 회계 검증 ── */
+var LEFT = ALLOCATED - SETTLED, HOLD = CLAIMABLE + LOCKED, OK = LEFT === HOLD;
+set("i-budget", won(BUDGET));
+set("i-alloc", won(ALLOCATED));
+set("i-settled", won(SETTLED));
+set("i-left", won(LEFT));
+set("i-hold", won(HOLD));
+var vd = document.getElementById("i-verdict");
+vd.textContent = OK ? "일치" : "불일치";
+vd.style.color = OK ? "var(--claimable)" : "var(--alert)";
+
+/* ── 반사실 차트 ── */
+var W2 = 900, H2 = 250, P2 = { l:58, r:22, t:20, b:36 }, DAYS = 30, EX = 12;
+var DAILY = Math.round(TOTAL / RIDES.length) * 4;
+
+function build(mode){
+  var claim = [], paid = [], cum = 0, cap = DAILY * EX;
+  for (var d = 0; d <= DAYS; d++){
+    if (!(mode === "cur" && d > EX)) cum += DAILY;
+    claim.push(cum);
+    paid.push(Math.min(cum, cap));
+  }
+  return { claim:claim, paid:paid, cap:cap };
+}
+
+function draw(mode){
+  var s = build(mode);
+  var maxY = Math.max.apply(null, s.claim.concat([s.cap])) * 1.12;
+  function X(i){ return P2.l + i * (W2 - P2.l - P2.r) / DAYS; }
+  function Y(v){ return H2 - P2.b - v / maxY * (H2 - P2.t - P2.b); }
+  function line(a){
+    return a.map(function(v,i){ return (i ? "L" : "M") + X(i).toFixed(1) + "," + Y(v).toFixed(1); }).join(" ");
+  }
+
+  var gap = s.claim[DAYS] - s.paid[DAYS];
+  var band = "";
+  if (mode === "new"){
+    var back = [];
+    for (var i = DAYS; i >= 0; i--) back.push("L" + X(i).toFixed(1) + "," + Y(s.paid[i]).toFixed(1));
+    band = '<path d="' + line(s.claim) + " " + back.join(" ") + ' Z" fill="url(#hatch)"/>';
+  }
+
+  var ticks = "";
+  [0, 10, 20, 30].forEach(function(d){
+    ticks += '<text x="' + X(d) + '" y="' + (H2 - 14) + '" fill="#6f6c64" font-size="11" text-anchor="middle">' +
+             (d === 0 ? "시작" : "D+" + d) + "</text>";
+  });
+
+  put("chart",
+    '<defs><pattern id="hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">' +
+    '<line x1="0" y1="0" x2="0" y2="7" stroke="#9a5b00" stroke-width="1.1" opacity=".45"/></pattern></defs>' +
+    '<line x1="' + P2.l + '" y1="' + Y(0) + '" x2="' + (W2 - P2.r) + '" y2="' + Y(0) + '" stroke="#22211e"/>' +
+    '<line x1="' + P2.l + '" y1="' + P2.t + '" x2="' + P2.l + '" y2="' + Y(0) + '" stroke="#cac7bf"/>' +
+    '<line x1="' + P2.l + '" y1="' + Y(s.cap) + '" x2="' + (W2 - P2.r) + '" y2="' + Y(s.cap) +
+      '" stroke="#2c4e8a" stroke-dasharray="5 4"/>' +
+    '<text x="' + (P2.l + 7) + '" y="' + (Y(s.cap) - 7) + '" fill="#2c4e8a" font-size="11">편성 예산</text>' +
+    '<line x1="' + X(EX) + '" y1="' + P2.t + '" x2="' + X(EX) + '" y2="' + Y(0) +
+      '" stroke="#22211e" stroke-dasharray="3 3"/>' +
+    '<text x="' + (X(EX) + 6) + '" y="' + (P2.t + 11) + '" fill="#22211e" font-size="11">예산 소진</text>' +
+    band +
+    '<path d="' + line(s.claim) + '" fill="none" stroke="#9a5b00" stroke-width="1.8"/>' +
+    '<path d="' + line(s.paid)  + '" fill="none" stroke="#1f6b4a" stroke-width="1.8"/>' +
+    ticks +
+    (mode === "cur"
+      ? '<text x="' + X(DAYS) + '" y="' + (Y(s.paid[DAYS]) - 9) +
+          '" fill="#1f6b4a" font-size="11" text-anchor="end">청구권과 지급이 함께 멈춤</text>' +
+        '<text x="' + (X(EX) + 6) + '" y="' + (Y(0) - 9) +
+          '" fill="#22211e" font-size="11">이후 운행은 기록되지 않음</text>'
+      : '<text x="' + X(DAYS) + '" y="' + (Y(s.claim[DAYS]) - 9) +
+          '" fill="#9a5b00" font-size="11" text-anchor="end">누적 청구권</text>' +
+        '<text x="' + X(DAYS) + '" y="' + (Y(s.paid[DAYS]) + 17) +
+          '" fill="#1f6b4a" font-size="11" text-anchor="end">누적 지급</text>' +
+        '<text x="' + (X(DAYS) - 6) + '" y="' + ((Y(s.claim[DAYS]) + Y(s.paid[DAYS])) / 2 + 4) +
+          '" fill="#9a5b00" font-size="11.5" text-anchor="end">미배정 ' + fmt(gap) + '원</text>'));
+
+  set("t-chart", mode === "cur"
+    ? "현행에서는 예산이 마르면 정산이 멈추고 그 기간의 운행도 기록되지 않습니다. 나중에 예산이 확보돼도 소급할 근거가 남지 않습니다. 이 차트는 30일 운영을 가정한 별도 시나리오이며 위 운행 5건과는 축이 다릅니다."
+    : "이 구조에서는 예산이 0이어도 청구권이 계속 확정됩니다. 지급만 멈추고, 두 선 사이의 빗금만큼이 미배정 잔액으로 장부에 남아 예산 확보 시 소급 배정됩니다. 이 차트는 30일 운영을 가정한 별도 시나리오이며 위 운행 5건과는 축이 다릅니다.");
+}
+
+var bCur = document.getElementById("b-cur"), bNew = document.getElementById("b-new");
+function pick(mode){
+  bCur.setAttribute("aria-pressed", String(mode === "cur"));
+  bNew.setAttribute("aria-pressed", String(mode === "new"));
+  draw(mode);
+}
+bCur.addEventListener("click", function(){ pick("cur"); });
+bNew.addEventListener("click", function(){ pick("new"); });
+pick("cur");
+</script>
+</body>
+</html>

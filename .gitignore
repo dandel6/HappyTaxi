@@ -1,0 +1,12 @@
+# Foundry
+im-challenge/contracts/lib/
+im-challenge/contracts/out/
+im-challenge/contracts/cache/
+im-challenge/contracts/broadcast/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.*

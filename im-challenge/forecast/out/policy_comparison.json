@@ -1,0 +1,64 @@
+{
+  "disclaimer": "합성 데이터. 예측 정확도 주장에 사용 금지. 정책 비교 전용.",
+  "generator_params": {
+    "seed": 20260920,
+    "citizens": 2000,
+    "days": 180,
+    "monthly_cap": 100000,
+    "min_unit": 100,
+    "budget": 135000000,
+    "accrual_mean": 900.0,
+    "accrual_cv": 0.45,
+    "participation": 0.62,
+    "weekend_drop": 0.35,
+    "conversion_propensity": 0.14,
+    "heavy_user_ratio": 0.15,
+    "heavy_user_multiplier": 3.2
+  },
+  "generator_basis": {
+    "seed": "재현용 고정값",
+    "citizens": "임의 — 데모 규모",
+    "days": "반기 집행 가정",
+    "monthly_cap": "행복택시 보조금 실제 규정 월 10만",
+    "min_unit": "행복택시 보조금 실제 규정 최소 100",
+    "budget": "임의 — 총 청구의 약 65%. 수요 초과 구간을 만들기 위한 값",
+    "accrual_mean": "임의 — 요일제+대중교통 합산 가정",
+    "accrual_cv": "임의 — 기사별 활동 편차",
+    "participation": "주 5일 활동 근사",
+    "weekend_drop": "임의 — 운휴일 제도 평일 중심",
+    "conversion_propensity": "임의",
+    "heavy_user_ratio": "달성군 재정 실물카드 10분 소진 — 적극 이용자 집중 정황",
+    "heavy_user_multiplier": "임의"
+  },
+  "total_accrued": 208637600,
+  "budget": 135000000,
+  "results": {
+    "first_come": {
+      "label": "선착순 (현행)",
+      "exhausted_on_day": 122,
+      "total_converted": 135000000,
+      "citizens_served": 2000,
+      "citizens_with_unfunded": 2000,
+      "total_unfunded": 73637600,
+      "gini": 0.2701
+    },
+    "equal": {
+      "label": "균등",
+      "exhausted_on_day": null,
+      "total_converted": 134833900,
+      "citizens_served": 2000,
+      "citizens_with_unfunded": 1868,
+      "total_unfunded": 73803700,
+      "gini": 0.0915
+    },
+    "priority": {
+      "label": "우선순위",
+      "exhausted_on_day": 179,
+      "total_converted": 135000000,
+      "citizens_served": 2000,
+      "citizens_with_unfunded": 1978,
+      "total_unfunded": 73637600,
+      "gini": 0.3199
+    }
+  }
+}

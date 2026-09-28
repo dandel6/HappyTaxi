@@ -1,0 +1,62 @@
+[
+  {
+    "driver": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "vehicle_hash": "0xfef9e8c9f97fa26c62bb9d3b6bd1213457d246366004f81468fc0fba777a3091",
+    "ride_timestamp": 1788218100,
+    "ride_day": 20697,
+    "origin_village_id": 1,
+    "fare_krw": 11400,
+    "passengers": 1,
+    "fare_source": "meter",
+    "source_ref": "0xb2dca156d85644bec5ccdec70def264bfc2ebbafd9ced69a13f0b9a417818fb1",
+    "backend": "deterministic-regex"
+  },
+  {
+    "driver": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "vehicle_hash": "0x13d0d4172548069164f042c1bec73a517db0f9a42072f8da76c7e4d19e3c5913",
+    "ride_timestamp": 1788223200,
+    "ride_day": 20697,
+    "origin_village_id": 2,
+    "fare_krw": 14200,
+    "passengers": 2,
+    "fare_source": "meter",
+    "source_ref": "0x86e4eba4becace3233afe8672713ce2dfb328fd08cb84abe77dd17dde7f95085",
+    "backend": "deterministic-regex"
+  },
+  {
+    "driver": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "vehicle_hash": "0xfef9e8c9f97fa26c62bb9d3b6bd1213457d246366004f81468fc0fba777a3091",
+    "ride_timestamp": 1788303300,
+    "ride_day": 20698,
+    "origin_village_id": 3,
+    "fare_krw": 9800,
+    "passengers": 1,
+    "fare_source": "meter",
+    "source_ref": "0x8d06d97b49025ddf4c596ca7e7df5a6581c049039d393ea60eb02912fc7156aa",
+    "backend": "deterministic-regex"
+  },
+  {
+    "driver": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    "vehicle_hash": "0xc33ebe90f4e6dbb669aefbfa00b1a611f0a52392a871ac70b895e98de7f9baf2",
+    "ride_timestamp": 1788326400,
+    "ride_day": 20698,
+    "origin_village_id": 4,
+    "fare_krw": 16500,
+    "passengers": 3,
+    "fare_source": "manual",
+    "source_ref": "0xec6fdb69571ea39f4208dcf082d9168d505b222552202486225a8993d4d7527e",
+    "backend": "deterministic-regex"
+  },
+  {
+    "driver": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "vehicle_hash": "0x13d0d4172548069164f042c1bec73a517db0f9a42072f8da76c7e4d19e3c5913",
+    "ride_timestamp": 1788401100,
+    "ride_day": 20699,
+    "origin_village_id": 5,
+    "fare_krw": 12700,
+    "passengers": 2,
+    "fare_source": "meter",
+    "source_ref": "0x575e40c4f2c13641834404c990bf15d5a34098b9d30c87c2bb42269168f0de87",
+    "backend": "deterministic-regex"
+  }
+]

@@ -1,0 +1,92 @@
+{
+  "episodes": [
+    {
+      "event_id": "E3",
+      "label": "2025년 발행분",
+      "budget_100m": 3968.0,
+      "start": "2025-08-01",
+      "actual_exhaustion": "2025-11-30",
+      "observations": 2
+    },
+    {
+      "event_id": "E4",
+      "label": "2026 상반기",
+      "budget_100m": 2000.0,
+      "start": "2026-02-02",
+      "actual_exhaustion": "2026-04-01",
+      "observations": 4
+    }
+  ],
+  "method_summary": {
+    "naive_linear": {
+      "n": 2,
+      "mae": 3.0,
+      "max": 4,
+      "min": 2
+    },
+    "recent_weighted": {
+      "n": 2,
+      "mae": 3.0,
+      "max": 4,
+      "min": 2
+    }
+  },
+  "verdict": "불합격(동률) — 제안 3.0일 = 베이스라인 3.0일. 수용 기준은 강부등호(<)이므로 동률은 충족하지 못한다",
+  "acceptance_criterion": {
+    "stated": "예측기 오차 < baseline 오차 (강부등호)",
+    "met": false,
+    "reconciliation": "점 추정에서 동률(3.0 = 3.0)이므로 수용 기준을 충족하지 못했다. 원인은 달성군 재정 소진이 거의 선형이어서 최근 가중이 개입할 여지가 없었다는 것이다. 표본이 2건뿐이라 가중치를 더 맞춰 넣으면 과적합이므로 조정하지 않았다. 구간 추정에 관한 주장은 interval_coverage.defensible_claim을 따른다 — 품질이 아니라 능력 차이만 주장하며, 구간 정확도는 표본 2건에서 주장하지 않는다. 제안서에는 동률을 숨기지 않고 그대로 싣고, 이 동률 자체를 ‘예측은 어렵지 않았다’는 논거로 사용한다."
+  },
+  "interval_coverage": {
+    "proposed_covered": 1,
+    "proposed_total": 2,
+    "baseline_produces_interval": false,
+    "intervals": [
+      {
+        "asof": "2026-03-02",
+        "lower": "2026-03-02",
+        "upper": "2026-04-27",
+        "width_days": 56,
+        "covered": true,
+        "lower_equals_asof": true
+      },
+      {
+        "asof": "2026-03-31",
+        "lower": "2026-04-04",
+        "upper": "2026-04-06",
+        "width_days": 2,
+        "covered": false,
+        "lower_equals_asof": false
+      }
+    ],
+    "quality_caveat": "구간 품질을 주장하지 않는다. 포함된 사례는 폭 56일이며 하한이 asof와 같아 '오늘부터 두 달 안'이라는 뜻이라 운영 정보가 없다. 반대로 폭 2일의 좋은 구간은 실제 소진일을 빗나갔다. 표본 2건에서 구간 정확도를 주장하면 방어할 수 없다.",
+    "defensible_claim": "주장 가능한 것은 품질이 아니라 능력이다. 본 구현의 naive_linear은 점 추정만 내므로 그 자체로는 '지금 경보할까'에 답할 수 없다. 제안은 답할 틀을 갖춘다. 그 틀의 정확도는 데이터가 더 쌓여야 평가할 수 있다. 주의: 선형 외삽 자체가 구간을 낼 수 없는 것은 아니다. OLS 예측구간이나 잔차 부트스트랩을 붙이면 베이스라인도 구간을 산출할 수 있다. 구조적 불가능이라고 주장하지 말 것.",
+    "wide_band_rationale": "관측이 1개 구간뿐일 때 cv=1.0(최대 불확실성)을 가정하는 의도된 보수 폴백이다. 표본 2건에 맞춰 폭을 줄이는 것은 과적합이므로 하지 않는다."
+  },
+  "threshold_alerts": [
+    {
+      "event_id": "E4",
+      "asof": "2026-03-02",
+      "rate_threshold_90pct_date": "2026-03-24",
+      "rate_threshold_lead_days": 8,
+      "leadtime_alert_fired": true,
+      "projected_exhaustion": "2026-03-30",
+      "actual_lead_days_at_alert": 30
+    },
+    {
+      "event_id": "E4",
+      "asof": "2026-03-31",
+      "rate_threshold_90pct_date": "2026-03-31",
+      "rate_threshold_lead_days": 1,
+      "leadtime_alert_fired": true,
+      "projected_exhaustion": "2026-04-05",
+      "actual_lead_days_at_alert": 1
+    }
+  ],
+  "caveats": [
+    "백테스트 가능 구간 2건. 통계적 일반화 불가.",
+    "일별 판매액 미공개로 관측이 희소함.",
+    "E3 소진일은 월 해상도(±15일).",
+    "절대 오차 기준(±N일)을 주장하지 않음. 베이스라인 대비로만 판정."
+  ]
+}

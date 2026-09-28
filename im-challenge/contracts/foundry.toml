@@ -1,0 +1,23 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+
+[invariant]
+# 핸들러 메모 기준값. 올릴수록 깊은 버그를 찾지만 오래 돈다.
+runs = 256
+depth = 64
+# 핸들러가 try/catch로 revert를 삼키므로 revert 자체는 실패가 아니다.
+fail_on_revert = false
+
+# 변이본 캠페인. 실패하는 것이 정상이라 기본 실행에서 뺀다.
+#   FOUNDRY_PROFILE=mutants forge test
+[profile.mutants]
+test = "mutants"
+
+[profile.mutants.invariant]
+runs = 256
+depth = 64
+fail_on_revert = false
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

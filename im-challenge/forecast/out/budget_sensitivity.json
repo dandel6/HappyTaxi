@@ -1,0 +1,126 @@
+{
+  "note": "budget 민감도. 청구 시계열은 budget과 무관하므로 순수 재정 규모 효과.",
+  "base_seed": 20260920,
+  "total_accruals": 208637600,
+  "default_budget_ratio": 0.6471,
+  "headline": {
+    "50%": {
+      "선착순": {
+        "exhausted_on_day": 95,
+        "citizens_with_unfunded": 2000,
+        "gini": 0.2738,
+        "total_converted": 104318800
+      },
+      "균등": {
+        "exhausted_on_day": null,
+        "citizens_with_unfunded": 1990,
+        "gini": 0.098,
+        "total_converted": 104289000
+      },
+      "우선순위": {
+        "exhausted_on_day": 179,
+        "citizens_with_unfunded": 1984,
+        "gini": 0.3781,
+        "total_converted": 104318800
+      }
+    },
+    "65%": {
+      "선착순": {
+        "exhausted_on_day": 122,
+        "citizens_with_unfunded": 2000,
+        "gini": 0.2698,
+        "total_converted": 135614400
+      },
+      "균등": {
+        "exhausted_on_day": null,
+        "citizens_with_unfunded": 1869,
+        "gini": 0.088,
+        "total_converted": 135401200
+      },
+      "우선순위": {
+        "exhausted_on_day": 179,
+        "citizens_with_unfunded": 1979,
+        "gini": 0.3254,
+        "total_converted": 135614400
+      }
+    },
+    "80%": {
+      "선착순": {
+        "exhausted_on_day": 149,
+        "citizens_with_unfunded": 2000,
+        "gini": 0.2657,
+        "total_converted": 166910000
+      },
+      "균등": {
+        "exhausted_on_day": null,
+        "citizens_with_unfunded": 1582,
+        "gini": 0.1264,
+        "total_converted": 161672600
+      },
+      "우선순위": {
+        "exhausted_on_day": 179,
+        "citizens_with_unfunded": 1964,
+        "gini": 0.2889,
+        "total_converted": 166910000
+      }
+    }
+  },
+  "robustness_across_seeds": {
+    "50%": {
+      "gini_mean": {
+        "first_come": 0.2757,
+        "equal": 0.0992,
+        "priority": 0.3802
+      },
+      "gini_sd": {
+        "first_come": 0.0026,
+        "equal": 0.0012,
+        "priority": 0.008
+      },
+      "priority_top_gini_seeds": "8/8",
+      "gap_priority_minus_firstcome_min": 0.0968,
+      "fewest_unfunded_policy": "priority"
+    },
+    "65%": {
+      "gini_mean": {
+        "first_come": 0.2694,
+        "equal": 0.0923,
+        "priority": 0.3252
+      },
+      "gini_sd": {
+        "first_come": 0.0021,
+        "equal": 0.0019,
+        "priority": 0.0027
+      },
+      "priority_top_gini_seeds": "8/8",
+      "gap_priority_minus_firstcome_min": 0.0507,
+      "fewest_unfunded_policy": "equal"
+    },
+    "80%": {
+      "gini_mean": {
+        "first_come": 0.2661,
+        "equal": 0.1259,
+        "priority": 0.2841
+      },
+      "gini_sd": {
+        "first_come": 0.0019,
+        "equal": 0.0019,
+        "priority": 0.003
+      },
+      "priority_top_gini_seeds": "8/8",
+      "gap_priority_minus_firstcome_min": 0.0144,
+      "fewest_unfunded_policy": "equal"
+    }
+  },
+  "gini_gap_priority_minus_firstcome_by_ratio": {
+    "40%": 0.1634,
+    "50%": 0.1001,
+    "60%": 0.0674,
+    "65%": 0.0567,
+    "70%": 0.041,
+    "80%": 0.018,
+    "90%": 0.0042,
+    "100%": -0.0002,
+    "110%": 0.0003
+  }
+}

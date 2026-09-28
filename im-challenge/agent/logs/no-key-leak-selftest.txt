@@ -1,0 +1,36 @@
+==========================================================================
+API 키 유출 차단 검증
+==========================================================================
+실행 시각 : 2026-09-18T09:58:59+09:00
+명령      : python selftest_no_key_leak.py
+종료 코드 : 0
+백엔드    : 해당 없음
+
+※ 이 로그에는 API 키가 포함되지 않습니다. extract.redact() 가 에러 문자열과
+   엔드포인트에서 토큰을 제거하며, 그 동작은 no-key-leak-selftest.txt 가
+   표식 키로 검증합니다.
+==========================================================================
+
+==========================================================================
+키 유출 차단 검증
+==========================================================================
+  표식 키 : gsk_...(이하 생략, 실물 아님)
+  엔드포인트에 쿼리로도 키를 붙여 최악 경로를 강제합니다
+
+  _extract_api 반환값: None  (None 이어야 정상)
+  수집된 에러 3건
+     [json_schema] HTTPError: HTTP Error 400: Bad Request | {"error": {"message": "invalid api key. received header: Bearer <redacted>", "echoed_url": "/v1?api_key=<
+     [json_object] HTTPError: HTTP Error 400: Bad Request | {"error": {"message": "invalid api key. received header: Bearer <redacted>", "echoed_url": "/v1?api_key=<
+     [plain] HTTPError: HTTP Error 400: Bad Request | {"error": {"message": "invalid api key. received header: Bearer <redacted>", "echoed_url": "/v1?api_key=<redact
+
+  표식 검색
+    OK    LAST_API_ERRORS
+    OK    콘솔 출력
+    OK    redact(endpoint)
+    OK    redact(가짜 에러문자열)
+
+  <redacted> 치환이 일어난 표면: 3개
+
+==========================================================================
+  통과 — 표식이 어느 표면에도 남지 않았다
+==========================================================================
